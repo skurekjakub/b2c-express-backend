@@ -1,0 +1,26 @@
+{
+  "name": "nodejs-backend-for-static-site",
+  "version": "1.0.0",
+  "description": "A Node.js backend for a static site with routing and basic authentication endpoints.",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "jsonwebtoken": "9.0.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.16",
+    "@types/jsonwebtoken": "^9.0.9",
+    "nodemon": "3.1.10",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
