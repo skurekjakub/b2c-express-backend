@@ -31,3 +31,11 @@ export const jwtConfig = {
   secret: process.env.JWT_SECRET || 'your_default_secret',
   expiresIn: '1h'
 };
+
+// Microsoft Graph API config
+export const graphApiConfig = {
+  clientId: process.env.GRAPH_API_CLIENT_ID || '',
+  clientSecret: process.env.GRAPH_API_CLIENT_SECRET || '',
+  tenantId: process.env.GRAPH_API_TENANT_ID || '',
+  customAttributeName: process.env.B2C_CUSTOM_ATTRIBUTE_NAME || '' // e.g., extension_yourAppId_customFieldName
+};
