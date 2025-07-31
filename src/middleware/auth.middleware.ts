@@ -1,34 +1,57 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import passport from 'passport';
+import { B2CAuthenticatedRequest, UserProfile } from './azureB2C.middleware';
+import { verifyToken } from '../utils/token.utils';
 
-// Define a type for the decoded user ID
-interface DecodedToken {
-    id: string; // Or number, depending on your user ID type
-}
-
-// Extend the Express Request interface to include userId
-interface AuthenticatedRequest extends Request {
-    userId?: string; // Or number
-}
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret'; // Use environment variable or a default
-
-const verifyToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-
-    if (!token) {
-        return res.status(403).send({ message: 'No token provided!' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(401).send({ message: 'Unauthorized!' });
-        }
-        // Type assertion for decoded object
-        req.userId = (decoded as DecodedToken).id;
-        next();
-    });
+/**
+ * Middleware to verify JWT tokens for protected routes
+ */
+export const verifySession = (req: Request, res: Response, next: NextFunction): void => {
+  const token = req.cookies?.auth_token || req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+  
+  const decoded = verifyToken(token);
+  
+  if (!decoded) {
+    res.status(401).json({ message: 'Invalid or expired token' });
+    return;
+  }
+  
+  (req as B2CAuthenticatedRequest).user = decoded;
+  (req as B2CAuthenticatedRequest).b2cAuthenticated = true;
+  next();
 };
 
-export { verifyToken };
+/**
+ * API authentication middleware using Passport Bearer strategy
+ */
+export const authenticateAPI = (req: Request, res: Response, next: NextFunction): void => {
+  passport.authenticate('bearer', { session: false }, (err: Error, user: UserProfile) => {
+    if (err) {
+      res.status(401).json({ message: 'Authentication error' });
+      return;
+    }
+    if (!user) {
+      res.status(401).json({ message: 'Invalid token' });
+      return;
+    }
+    (req as B2CAuthenticatedRequest).user = user;
+    (req as B2CAuthenticatedRequest).b2cAuthenticated = true;
+    next();
+  })(req, res, next);
+};
+
+/**
+ * Middleware to check if user is authenticated
+ */
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction): void => {
+  if ((req as B2CAuthenticatedRequest).b2cAuthenticated) {
+    next();
+  } else {
+    res.status(401).json({ message: 'Authentication required' });
+  }
+};
